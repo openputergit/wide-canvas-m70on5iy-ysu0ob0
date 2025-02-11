@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlindHire - Unbiased Hiring Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .neo-morphism {
+            border-radius: 20px;
+            background: #f0f0f0;
+            box-shadow: 8px 8px 16px #d1d1d1, -8px -8px 16px #ffffff;
+        }
+        .neo-button {
+            border-radius: 10px;
+            background: #f0f0f0;
+            box-shadow: 5px 5px 10px #d1d1d1, -5px -5px 10px #ffffff;
+            transition: all 0.3s ease;
+        }
+        .neo-button:active {
+            box-shadow: inset 5px 5px 10px #d1d1d1, inset -5px -5px 10px #ffffff;
+        }
+        .swipe-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: center;
+            cursor: grab;
+        }
+        .card-rotate-left {
+            transform: rotate(-30deg) translateX(-100%);
+            transition: transform 0.3s ease;
+            opacity: 0;
+        }
+        .card-rotate-right {
+            transform: rotate(30deg) translateX(100%);
+            transition: transform 0.3s ease;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app" class="max-w-md mx-auto p-4">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <div class="text-2xl font-bold text-primary">BlindHire</div>
+            <div class="flex gap-4">
+                <button class="neo-button p-2" onclick="toggleProfile()">
+                    <i class="bi bi-person-circle text-xl"></i>
+                </button>
+                <button class="neo-button p-2" onclick="toggleMessages()">
+                    <i class="bi bi-chat-dots text-xl"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Swipe Area -->
+        <div id="swipeContainer" class="neo-morphism relative h-[70vh] mb-6 overflow-hidden">
+            <div id="cardStack" class="relative w-full h-full">
+                <!-- Cards will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center gap-6">
+            <button class="neo-button p-4 text-red-500" onclick="swipeLeft()">
+                <i class="bi bi-x-lg text-2xl"></i>
+            </button>
+            <button class="neo-button p-4 text-blue-500" onclick="superLike()">
+                <i class="bi bi-star-fill text-2xl"></i>
+            </button>
+            <button class="neo-button p-4 text-green-500" onclick="swipeRight()">
+                <i class="bi bi-check-lg text-2xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const jobData = [
+            {
+                id: 1,
+                role: "Software Engineer",
+                experience: "3-5 years",
+                skills: ["JavaScript", "React", "Node.js"],
+                description: "Looking for a passionate developer to join our team...",
+                salary: "$80k - $120k"
+            },
+            // Add more job data as needed
+        ];
+
+        let currentIndex = 0;
+
+        function createCard(data) {
+            const card = document.createElement('div');
+            card.className = 'swipe-card neo-morphism p-6';
+            card.innerHTML = `
+                <h2 class="text-xl font-bold mb-4">${data.role}</h2>
+                <p class="text-gray-600 mb-2">Experience: ${data.experience}</p>
+                <div class="mb-4">
+                    <h3 class="font-semibold mb-2">Skills:</h3>
+                    <div class="flex flex-wrap gap-2">
+                        ${data.skills.map(skill => `
+                            <span class="neo-button px-3 py-1 text-sm">${skill}</span>
+                        `).join('')}
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">${data.description}</p>
+                <p class="text-primary font-semibold">${data.salary}</p>
+            `;
+            return card;
+        }
+
+        function initializeCards() {
+            const cardStack = document.getElementById('cardStack');
+            jobData.forEach((job, index) => {
+                const card = createCard(job);
+                card.style.zIndex = jobData.length - index;
+                cardStack.appendChild(card);
+            });
+
+            // Initialize touch events
+            let startX = 0;
+            const cards = document.querySelectorAll('.swipe-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                });
+
+                card.addEventListener('touchmove', (e) => {
+                    const currentX = e.touches[0].clientX;
+                    const diff = currentX - startX;
+                    card.style.transform = `translateX(${diff}px) rotate(${diff * 0.1}deg)`;
+                });
+
+                card.addEventListener('touchend', (e) => {
+                    const diff = e.changedTouches[0].clientX - startX;
+                    if (Math.abs(diff) > 100) {
+                        if (diff > 0) swipeRight();
+                        else swipeLeft();
+                    } else {
+                        card.style.transform = '';
+                    }
+                });
+            });
+        }
+
+        function swipeLeft() {
+            const cards = document.querySelectorAll('.swipe-card');
+            if (currentIndex < cards.length) {
+                cards[currentIndex].classList.add('card-rotate-left');
+                currentIndex++;
+            }
+        }
+
+        function swipeRight() {
+            const cards = document.querySelectorAll('.swipe-card');
+            if (currentIndex < cards.length) {
+                cards[currentIndex].classList.add('card-rotate-right');
+                currentIndex++;
+                // Simulate a match
+                if (Math.random() > 0.5) showMatch();
+            }
+        }
+
+        function superLike() {
+            const cards = document.querySelectorAll('.swipe-card');
+            if (currentIndex < cards.length) {
+                cards[currentIndex].style.transform = 'translateY(-200%) scale(0.8)';
+                cards[currentIndex].style.opacity = '0';
+                currentIndex++;
+                showMatch();
+            }
+        }
+
+        function showMatch() {
+            alert("It's a match! 🎉 You can now start chatting!");
+        }
+
+        function toggleProfile() {
+            alert("Profile section coming soon!");
+        }
+
+        function toggleMessages() {
+            alert("Messages section coming soon!");
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', initializeCards);
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
